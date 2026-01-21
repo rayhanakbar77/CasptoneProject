@@ -3,18 +3,21 @@
 
     <div class="flex min-h-full flex-col bg-white w-72 border-r border-slate-100 transition-all duration-300">
 
+        {{-- Header / Logo --}}
         <div class="h-16 flex items-center justify-center border-b border-slate-50 mb-4">
             <div class="w-full flex items-center px-6 gap-3">
-                {{-- Logo Image (pastikan ukurannya pas) --}}
                 <div class="w-8 h-8 rounded bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
+                    {{-- Pastikan path logo benar --}}
                     <img src="{{ asset('images/logo.jpeg') }}" alt="Logo" class="w-full h-full object-cover rounded">
                 </div>
                 <span class="font-bold text-xl text-slate-800">Dashboard</span>
             </div>
         </div>
 
+        {{-- Menu List --}}
         <ul class="menu w-full px-4 gap-2 text-slate-500 font-medium">
 
+            {{-- 1. Dashboard --}}
             <li>
                 <a href="{{ route('admin.dashboard') }}"
                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
@@ -26,8 +29,10 @@
                 </a>
             </li>
 
+            {{-- SECTION: MASTER DATA --}}
             <li class="menu-title text-xs font-bold text-slate-400 uppercase mt-4 mb-1 px-4">Master Data</li>
 
+            {{-- 2. Kategori --}}
             <li>
                 <a href="{{ route('admin.categories.index') }}"
                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
@@ -39,6 +44,7 @@
                 </a>
             </li>
 
+            {{-- 3. Event --}}
             <li>
                 <a href="{{ route('admin.events.index') }}"
                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
@@ -50,8 +56,22 @@
                 </a>
             </li>
 
+            {{-- 4. Metode Pembayaran (BARU) --}}
+            <li>
+                <a href="{{ route('admin.payment-types.index') }}"
+                   class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+                   {{ request()->routeIs('admin.payment-types*') ? 'bg-indigo-50 text-indigo-600 font-semibold shadow-sm ring-1 ring-indigo-200' : 'hover:bg-slate-50 hover:text-slate-900' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    <span>Metode Pembayaran</span>
+                </a>
+            </li>
+
+            {{-- SECTION: TRANSAKSI --}}
             <li class="menu-title text-xs font-bold text-slate-400 uppercase mt-4 mb-1 px-4">Transaksi</li>
 
+            {{-- 5. History Pembelian --}}
             <li>
                 <a href="{{ route('admin.histories.index') }}"
                    class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
@@ -65,6 +85,7 @@
             </li>
         </ul>
 
+        {{-- Footer / Logout --}}
         <div class="p-4 mt-auto border-t border-slate-100">
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
