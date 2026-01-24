@@ -15,12 +15,16 @@ use App\Http\Controllers\Admin\PaymentTypeController;
 
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
 //events
 Route::get('/events/{event}', [UserEventController::class, 'show'])->name('events.show');
-//orders
+
+// --- BAGIAN INI DIPERBAIKI ---
+// orders
 Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
 Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+// -----------------------------
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

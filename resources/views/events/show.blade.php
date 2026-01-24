@@ -1,6 +1,4 @@
 <x-layouts.app>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
   <section class="max-w-7xl mx-auto py-12 px-6">
     <nav class="mb-6">
       <div class="breadcrumbs">
@@ -61,10 +59,8 @@
                   <div class="mt-3 flex items-center justify-end gap-2">
                     <button type="button" class="btn btn-sm btn-outline" data-action="dec" data-id="{{ $tiket->id }}"
                       aria-label="Kurangi satu">−</button>
-
                     <input id="qty-{{ $tiket->id }}" type="number" min="0" max="{{ $tiket->stok }}" value="0"
                       class="input input-bordered w-16 text-center" data-id="{{ $tiket->id }}" />
-
                     <button type="button" class="btn btn-sm btn-outline" data-action="inc" data-id="{{ $tiket->id }}"
                       aria-label="Tambah satu">+</button>
                   </div>
@@ -140,31 +136,9 @@
         return 'Rp ' + Number(value).toLocaleString('id-ID');
       }
 
-      // --- Helper Pop-up Error Cantik (SweetAlert2) ---
-      const showStockError = (message) => {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Stok Tidak Mencukupi',
-          text: message,
-          confirmButtonText: 'Mengerti',
-          confirmButtonColor: '#1e3a8a' // Warna Blue-900
-        });
-      }
-
-      const showGenericError = (title, message) => {
-        Swal.fire({
-          icon: 'error',
-          title: title,
-          text: message,
-          confirmButtonText: 'Tutup',
-          confirmButtonColor: '#d33'
-        });
-      }
-
-      // 1. Data Tiket dari Backend
       const tickets = {
         @foreach($event->tikets as $tiket)
-          {{ $tiket->id }}: {
+            {{ $tiket->id }}: {
             id: {{ $tiket->id }},
             price: {{ $tiket->harga ?? 0 }},
             stock: {{ $tiket->stok }},
@@ -173,196 +147,201 @@
         @endforeach
       };
 
-      const summaryItemsEl = document.getElementById('summaryItems');
-      const summaryTotalEl = document.getElementById('summaryTotal');
-      const selectedListEl = document.getElementById('selectedList');
-      const checkoutButton = document.getElementById('checkoutButton');
+    const summaryItemsEl = document.getElementById('summaryItems');
+    const summaryTotalEl = document.getElementById('summaryTotal');
+    const selectedListEl = document.getElementById('selectedList');
+    const checkoutButton = document.getElementById('checkoutButton');
 
-      function updateSummary() {
-        let totalQty = 0;
-        let totalPrice = 0;
-        let selectedHtml = '';
+    function updateSummary() {
+      let totalQty = 0;
+      let totalPrice = 0;
+      let selectedHtml = '';
 
-        Object.values(tickets).forEach(t => {
-          const qtyInput = document.getElementById('qty-' + t.id);
-          if (!qtyInput) return;
-          const qty = Number(qtyInput.value || 0);
-          if (qty > 0) {
-            totalQty += qty;
-            totalPrice += qty * t.price;
-            selectedHtml += `<div class="flex justify-between"><span>${t.tipe} x ${qty}</span><span>${formatRupiah(qty * t.price)}</span></div>`;
-          }
-        });
-
-        summaryItemsEl.textContent = totalQty;
-        summaryTotalEl.textContent = formatRupiah(totalPrice);
-        selectedListEl.innerHTML = selectedHtml || '<p class="text-gray-500">Belum ada tiket dipilih</p>';
-
-        if(checkoutButton) {
-            checkoutButton.disabled = totalQty === 0;
+      Object.values(tickets).forEach(t => {
+        const qtyInput = document.getElementById('qty-' + t.id);
+        if (!qtyInput) return;
+        const qty = Number(qtyInput.value || 0);
+        if (qty > 0) {
+          totalQty += qty;
+          totalPrice += qty * t.price;
+          selectedHtml += `<div class="flex justify-between"><span>${t.tipe} x ${qty}</span><span>${formatRupiah(qty * t.price)}</span></div>`;
         }
-      }
-
-      // --- 2. VALIDASI STOK SAAT TOMBOL TAMBAH (+) DITEKAN ---
-      document.querySelectorAll('[data-action="inc"]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const id = e.currentTarget.dataset.id;
-          const input = document.getElementById('qty-' + id)
-          const info = tickets[id];
-          if (!input || !info) return;
-
-          let val = Number(input.value || 0);
-
-          // Cek Stok Sebelum Menambah dengan SweetAlert
-          if (val >= info.stock) {
-            showStockError(`Maaf, sisa stok tiket ${info.tipe} hanya tersedia ${info.stock} buah.`);
-            return; // Berhenti disini
-          }
-
-          val++;
-          input.value = val;
-          updateTicketSubtotal(id);
-          updateSummary();
-        });
       });
 
-      // Logic Tombol Kurang (-)
-      document.querySelectorAll('[data-action="dec"]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const id = e.currentTarget.dataset.id;
-          const input = document.getElementById('qty-' + id);
-          if (!input) return;
-          let val = Number(input.value || 0);
-          if (val > 0) val--;
-          input.value = val;
-          updateTicketSubtotal(id);
-          updateSummary();
-        });
-      });
+      summaryItemsEl.textContent = totalQty;
+      summaryTotalEl.textContent = formatRupiah(totalPrice);
+      selectedListEl.innerHTML = selectedHtml || '<p class="text-gray-500">Belum ada tiket dipilih</p>';
 
-      // --- 3. VALIDASI STOK SAAT INPUT MANUAL ---
-      document.querySelectorAll('input[id^="qty-"]').forEach(input => {
-        input.addEventListener('change', (e) => {
-          const el = e.currentTarget;
-          const id = el.dataset.id;
-          const info = tickets[id];
-          let val = Number(el.value || 0);
-
-          if (val < 0) val = 0;
-
-          // Cek Jika Input Manual Melebihi Stok
-          if (val > info.stock) {
-             showStockError(`Anda meminta ${val} tiket, namun stok ${info.tipe} hanya tersedia ${info.stock}.`);
-             val = info.stock; // Reset ke max stok
-          }
-
-          el.value = val;
-          updateTicketSubtotal(id);
-          updateSummary();
-        });
-      });
-
-      function updateTicketSubtotal(id) {
-        const t = tickets[id];
-        const qty = Number(document.getElementById('qty-' + id).value || 0);
-        const subtotalEl = document.getElementById('subtotal-' + id);
-        if (subtotalEl) subtotalEl.textContent = formatRupiah(qty * t.price);
+      if(checkoutButton) {
+          checkoutButton.disabled = totalQty === 0;
       }
+    }
 
-      // Checkout modal
-      window.openCheckout = function () {
-        const modal = document.getElementById('checkout_modal');
-        const modalItems = document.getElementById('modalItems');
-        const modalTotal = document.getElementById('modalTotal');
+    // --- CHECKOUT LOGIC ---
+    const btnConfirm = document.getElementById('confirmCheckout');
+    if(btnConfirm) {
+        btnConfirm.addEventListener('click', async () => {
+          const btn = document.getElementById('confirmCheckout');
+          btn.setAttribute('disabled', 'disabled');
+          btn.textContent = 'Memproses...';
 
-        let itemsHtml = '';
-        let total = 0;
-        Object.values(tickets).forEach(t => {
-          const qty = Number(document.getElementById('qty-' + t.id).value || 0);
-          if (qty > 0) {
-            itemsHtml += `<div class="flex justify-between"><span>${t.tipe} x ${qty}</span><span>${formatRupiah(qty * t.price)}</span></div>`;
-            total += qty * t.price;
-          }
-        });
-
-        modalItems.innerHTML = itemsHtml || '<p class="text-gray-500">Belum ada item.</p>';
-        modalTotal.textContent = formatRupiah(total);
-
-        if (typeof modal.showModal === 'function') {
-          modal.showModal();
-        } else {
-          modal.classList.add('modal-open');
-        }
-      }
-
-      // --- 4. PROSES CHECKOUT AJAX ---
-      document.getElementById('confirmCheckout').addEventListener('click', async () => {
-        const btn = document.getElementById('confirmCheckout');
-        btn.setAttribute('disabled', 'disabled');
-        btn.textContent = 'Memproses...';
-
-        // gather items
-        const items = [];
-        Object.values(tickets).forEach(t => {
-          const qty = Number(document.getElementById('qty-' + t.id).value || 0);
-          if (qty > 0) items.push({ tiket_id: t.id, jumlah: qty });
-        });
-
-        if (items.length === 0) {
-          showGenericError('Peringatan', 'Tidak ada tiket yang dipilih.');
-          btn.removeAttribute('disabled');
-          btn.textContent = 'Konfirmasi';
-          return;
-        }
-
-        try {
-          const res = await fetch("{{ route('orders.store') }}", {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({ event_id: {{ $event->id }}, items })
+          // gather items
+          const items = [];
+          Object.values(tickets).forEach(t => {
+            const qty = Number(document.getElementById('qty-' + t.id).value || 0);
+            if (qty > 0) items.push({ tiket_id: t.id, jumlah: qty });
           });
 
-          if (!res.ok) {
-            const text = await res.text();
-            try {
-                const jsonError = JSON.parse(text);
-                throw new Error(jsonError.message || 'Gagal membuat pesanan');
-            } catch (e) {
-                throw new Error(text || 'Gagal membuat pesanan');
+          if (items.length === 0) {
+            alert('Tidak ada tiket dipilih');
+            btn.removeAttribute('disabled');
+            btn.textContent = 'Konfirmasi';
+            return;
+          }
+
+          try {
+            const res = await fetch("{{ route('orders.store') }}", {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+              },
+              body: JSON.stringify({ event_id: {{ $event->id }}, items })
+            });
+
+            if (!res.ok) {
+              const text = await res.text();
+              throw new Error(text || 'Gagal membuat pesanan');
             }
+
+            const data = await res.json();
+            // redirect to orders list
+            window.location.href = data.redirect || '{{ route('orders.index') }}';
+          } catch (err) {
+            console.log(err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: 'Terjadi kesalahan: ' + err.message
+            });
+            btn.removeAttribute('disabled');
+            btn.textContent = 'Konfirmasi';
           }
+        });
+    }
 
-          const data = await res.json();
+    // --- BUTTON PLUS (INC) LOGIC [UPDATED FOR POPUP] ---
+    document.querySelectorAll('[data-action="inc"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.dataset.id;
+        const input = document.getElementById('qty-' + id)
+        const info = tickets[id];
+        if (!input || !info) return;
 
-          // Sukses dengan SweetAlert sebelum redirect
-          Swal.fire({
-            icon: 'success',
-            title: 'Berhasil!',
-            text: 'Pesanan Anda sedang diproses.',
-            timer: 1500,
-            showConfirmButton: false
-          }).then(() => {
-             window.location.href = data.redirect || '{{ route('orders.index') }}';
-          });
+        let val = Number(input.value || 0);
 
-        } catch (err) {
-          console.log(err);
-          // Tampilkan Error dari Backend (misal stok habis saat checkout)
-          showGenericError('Gagal Memproses Pesanan', err.message);
+        // ==========================================
+        //  BAGIAN INI YANG DITAMBAHKAN UNTUK POPUP
+        // ==========================================
+        if (val < info.stock) {
+            val++; // Jika masih ada stok, tambah
+        } else {
+            // Jika stok habis/mentok, munculkan Popup
+            Swal.fire({
+                icon: 'error',
+                title: 'Stok Terbatas!',
+                text: 'Maaf, sisa stok tiket ini hanya tersedia ' + info.stock + ' item.',
+                confirmButtonColor: '#1e3a8a',
+                confirmButtonText: 'Mengerti'
+            });
+        }
+        // ==========================================
 
-          btn.removeAttribute('disabled');
-          btn.textContent = 'Konfirmasi';
+        input.value = val;
+        updateTicketSubtotal(id);
+        updateSummary();
+      });
+    });
 
-          document.getElementById('checkout_modal').close();
+    // --- BUTTON MINUS (DEC) LOGIC ---
+    document.querySelectorAll('[data-action="dec"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.dataset.id;
+        const input = document.getElementById('qty-' + id);
+        if (!input) return;
+        let val = Number(input.value || 0);
+        if (val > 0) val--;
+        input.value = val;
+        updateTicketSubtotal(id);
+        updateSummary();
+      });
+    });
+
+    // --- MANUAL INPUT LOGIC ---
+    document.querySelectorAll('input[id^="qty-"]').forEach(input => {
+      input.addEventListener('change', (e) => {
+        const el = e.currentTarget;
+        const id = el.dataset.id;
+        const info = tickets[id];
+        let val = Number(el.value || 0);
+
+        if (val < 0) val = 0;
+
+        // Cek stok saat input manual
+        if (val > info.stock) {
+            val = info.stock;
+            Swal.fire({
+                icon: 'warning',
+                title: 'Stok Terbatas',
+                text: 'Jumlah disesuaikan dengan sisa stok (' + info.stock + ').',
+                confirmButtonColor: '#1e3a8a'
+            });
+        }
+
+        el.value = val;
+        updateTicketSubtotal(id);
+        updateSummary();
+      });
+    });
+
+    function updateTicketSubtotal(id) {
+      const t = tickets[id];
+      const qty = Number(document.getElementById('qty-' + id).value || 0);
+      const subtotalEl = document.getElementById('subtotal-' + id);
+      if (subtotalEl) subtotalEl.textContent = formatRupiah(qty * t.price);
+    }
+
+    // Checkout modal
+    window.openCheckout = function () {
+      const modal = document.getElementById('checkout_modal');
+      // populate modal items
+      const modalItems = document.getElementById('modalItems');
+      const modalTotal = document.getElementById('modalTotal');
+
+      let itemsHtml = '';
+      let total = 0;
+      Object.values(tickets).forEach(t => {
+        const qty = Number(document.getElementById('qty-' + t.id).value || 0);
+        if (qty > 0) {
+          itemsHtml += `<div class="flex justify-between"><span>${t.tipe} x ${qty}</span><span>${formatRupiah(qty * t.price)}</span></div>`;
+          total += qty * t.price;
         }
       });
 
-      // init
-      updateSummary();
+      modalItems.innerHTML = itemsHtml || '<p class="text-gray-500">Belum ada item.</p>';
+      modalTotal.textContent = formatRupiah(total);
+
+      if (typeof modal.showModal === 'function') {
+        modal.showModal();
+      } else {
+        // fallback for older browsers
+        modal.classList.add('modal-open');
+      }
+    }
+
+    // init
+    updateSummary();
     }) ();
   </script>
 </x-layouts.app>
